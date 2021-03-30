@@ -1,60 +1,103 @@
 const Discord = require('discord.js');
 const client = new Discord.Client();
 
+const Yahoo = require('yahoo-finance-webscraper');
+const source = new Yahoo.Client({
+    tickerCache: false, // If enabled true the bot will cache all tickers for 15 seconds
+    invalidCache: true, // If enabled true the bot will cache any invalid tickers
+});
+
 require('dotenv').config();
 
 const token = process.env.BOT_TOKEN;
 const ticker = process.env.TICKER;
+const frequency = process.env.FREQUENCY;
 
 if(!token || !ticker)
     throw new Error('Vars missing');
+
+if(!frequency)
+    frequency = 60;    
 
 client.login(token);
 
 client.on('ready', function() {
     console.log(`Logged in as ${client.user.tag}`);
-    console.log(`Currently in ${client.guilds.cache.map(guild => guild.id)}`);
-});
+    console.log(`Currently in ${client.guilds.cache.map(guild => `"${guild.name}"`).join(', ')}`);
 
+    function numFormatter(num) {
+        if(num > 999 && num < 1000000)
+            return (num/1000).toFixed(0) + 'K';
+        else if(num > 1000000)
+            return (num/1000000).toFixed(0) + 'M';
+        else if(num < 900)
+            return num;
+    }
 
+    function setNickname(val) {    
+        client.guilds.cache.forEach((guild) => {
+            //console.log(guild);  
+            guild.me.setNickname(`${ticker} - $${val}`)        
+                .then(GuildMember => console.log(`Nickname changed to ${GuildMember.nickname}`))
+                .catch(console.error);
+        });    
+    }
 
+    function setActivity(val) {
+        client.user.setActivity(val, {type: 'WATCHING'})
+            .then(presence => console.log(`Activity set to ${presence.activities[0].name}`))
+            .catch(console.error);
+    }
 
+    function run() {
+        source.getSingleStockInfo(ticker).then(data => {
+            //console.log(data);
+            setNickname(data.regularMarketPrice);
 
+            if(data.marketState == 'REGULAR') {  
+                if(data.regularMarketChange < 0) {
+                    value = `-${parseFloat(data.regularMarketChange).toFixed(1)}`;
+                    percent = `-${parseFloat(data.regularMarketChangePercent).toFixed(1)}`;
+                }
+                else {                
+                    value = `+${parseFloat(data.regularMarketChange).toFixed(1)}`;
+                    percent = `+${parseFloat(data.regularMarketChangePercent).toFixed(1)}%`;
+                }               
+                volume = numFormatter(data.regularMarketVolume); 
 
+                setActivity(`${value} / ${percent} / ${volume}`);
+            }
+            else if (data.marketState == 'PRE') {
+                if(data.preMarketChange < 0) {
+                    value = `-${parseFloat(data.preMarketChange).toFixed(1)}`;
+                    percent = `-${parseFloat(data.preMarketChangePercent).toFixed(1)}`;
+                }
+                else {                
+                    value = `+${parseFloat(data.preMarketChange).toFixed(1)}`;
+                    percent = `+${parseFloat(data.preMarketChangePercent).toFixed(1)}%`;
+                }    
 
+                setActivity(`Pre-market: ${value} / ${percent}`);            
+            }
+            else if (data.marketState == 'POST') {
+                if(data.postMarketChange < 0) {
+                    value = `-${parseFloat(data.postMarketChange).toFixed(1)}`;
+                    percent = `-${parseFloat(data.postMarketChangePercent).toFixed(1)}`;
+                }
+                else {                
+                    value = `+${parseFloat(data.postMarketChange).toFixed(1)}`;
+                    percent = `+${parseFloat(data.postMarketChangePercent).toFixed(1)}%`;
+                }    
 
+                setActivity(`After-hours: ${value} / ${percent}`);            
+            }
+            else {
+                throw new Error('Market state not acquired');
+            }
+        });        
+        
+        return setInterval(run, frequency);
+    }
 
-
-
-
-
-
-
-
-
-
-// Adding jokes function
-
-// Jokes from dcslsoftware.com/20-one-liners-only-software-developers-understand/
-// www.journaldev.com/240/my-25-favorite-programming-quotes-that-are-funny-too
-const jokes = [
-  'I went to a street where the houses were numbered 8k, 16k, 32k, 64k, 128k, 256k and 512k. It was a trip down Memory Lane.',
-  '“Debugging” is like being the detective in a crime drama where you are also the murderer.',
-  'The best thing about a Boolean is that even if you are wrong, you are only off by a bit.',
-  'A programmer puts two glasses on his bedside table before going to sleep. A full one, in case he gets thirsty, and an empty one, in case he doesn’t.',
-  'If you listen to a UNIX shell, can you hear the C?',
-  'Why do Java programmers have to wear glasses? Because they don’t C#.',
-  'What sits on your shoulder and says “Pieces of 7! Pieces of 7!”? A Parroty Error.',
-  'When Apple employees die, does their life HTML5 in front of their eyes?',
-  'Without requirements or design, programming is the art of adding bugs to an empty text file.',
-  'Before software can be reusable it first has to be usable.',
-  'The best method for accelerating a computer is the one that boosts it by 9.8 m/s2.',
-  'I think Microsoft named .Net so it wouldn’t show up in a Unix directory listing.',
-  'There are two ways to write error-free programs; only the third one works.',
-];
-
-client.on('message', (msg) => {
-  if (msg.content === '?joke') {
-    msg.channel.send(jokes[Math.floor(Math.random() * jokes.length)]);
-  }
+    run();
 });
