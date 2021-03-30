@@ -13,8 +13,10 @@ const token = process.env.BOT_TOKEN;
 const ticker = process.env.TICKER;
 const frequency = process.env.FREQUENCY;
 
-if(!token || !ticker)
-    throw new Error('Vars missing');
+if(!token || !ticker) {
+    console.error('Error: env');
+    process.exit();
+}
 
 if(!frequency)
     frequency = 60;    
@@ -92,12 +94,11 @@ client.on('ready', function() {
                 setActivity(`After-hours: ${value} / ${percent}`);            
             }
             else {
-                throw new Error('Market state not acquired');
+                console.error('Error: market');
+                process.exit();
             }
         });        
-        
-        return setInterval(run, frequency);
     }
 
-    run();
+    setInterval(run, frequency);
 });
