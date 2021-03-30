@@ -19,7 +19,7 @@ const frequency = process.env.FREQUENCY;
 
 //check if vars exist
 if(!token || !ticker) {
-    console.error('Error: env');
+    console.error('Error: params');
     process.exit();
 }
 if(!frequency)
@@ -33,6 +33,7 @@ client.on('ready', function() {
     console.log(`Logged in as ${client.user.tag}`);
     console.log(`Currently in ${client.guilds.cache.map(guild => `"${guild.name}"`).join(', ')}`);
 
+    // convert number to K or M
     function numFormatter(num) {
         if(num > 999 && num < 1000000)
             return (num/1000).toFixed(0) + 'K';
@@ -42,9 +43,9 @@ client.on('ready', function() {
             return num;
     }
 
+    // set bot's nickname
     function setNickname(val) {    
         client.guilds.cache.forEach((guild) => {
-            //console.log(guild);  
             if(guild.me.nickname != val) {
                 guild.me.setNickname(val)        
                     .then(GuildMember => console.log(`Nickname changed to ${GuildMember.nickname}`))
@@ -53,6 +54,7 @@ client.on('ready', function() {
         });    
     }
 
+    // set bot's activity
     function setActivity(val) {
         if(client.user.presence.activities.length === 0 || client.user.presence.activities[0].name !== val) {
             client.user.setActivity(val, {type: 'WATCHING'})
@@ -62,11 +64,11 @@ client.on('ready', function() {
     }
 
     function run() {
+        // fetch stock data
         source.getSingleStockInfo(ticker).then(data => {
-            //console.log(data);
             setNickname(`${ticker} - $${data.regularMarketPrice}`);
 
-            if(data.marketState == 'REGULAR') {  
+            if(data.marketState == 'REGULAR') { // market open
                 if(data.regularMarketChange < 0) {
                     value = `-${parseFloat(data.regularMarketChange).toFixed(2)}`;
                     percent = `-${parseFloat(data.regularMarketChangePercent).toFixed(1)}`;
@@ -79,7 +81,7 @@ client.on('ready', function() {
 
                 setActivity(`${value} / ${percent} / ${volume}`);
             }
-            else if (data.marketState == 'PRE') {
+            else if (data.marketState == 'PRE') { // pre-market
                 if(data.preMarketChange < 0) {
                     value = `${parseFloat(data.preMarketChange).toFixed(2)}`;
                     percent = `${parseFloat(data.preMarketChangePercent).toFixed(1)}%`;
@@ -91,7 +93,7 @@ client.on('ready', function() {
 
                 setActivity(`PM: ${value} / ${percent}`);            
             }
-            else if (data.marketState == 'POST') {
+            else if (data.marketState == 'POST') { // after-hours
                 if(data.postMarketChange < 0) {
                     value = `${parseFloat(data.postMarketChange).toFixed(2)}`;
                     percent = `${parseFloat(data.postMarketChangePercent).toFixed(1)}%`;
@@ -104,7 +106,7 @@ client.on('ready', function() {
                 setActivity(`AH: ${value} / ${percent}`);            
             }
             else {
-                console.error('Error: market');
+                console.error('Error: data');
                 process.exit();
             }
 
