@@ -7,11 +7,14 @@ const token = process.env.BOT_TOKEN;
 const ticker = process.env.TICKER;
 
 if(!token || !ticker)
-    console.log('Vars missing');
+    throw new Error('Vars missing');
 
 client.login(token);
-client.on('ready', () => console.log(`Logged in as ${client.user.tag}`));
-console.log(client.guilds);
+
+client.on('ready', function() {
+    console.log(`Logged in as ${client.user.tag}`);
+    console.log(`Currently in ${client.guilds.cache.map(guild => guild.id)}`);
+});
 
 
 
