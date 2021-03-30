@@ -39,16 +39,20 @@ client.on('ready', function() {
     function setNickname(val) {    
         client.guilds.cache.forEach((guild) => {
             //console.log(guild);  
-            guild.me.setNickname(`${ticker} - $${val}`)        
-                .then(GuildMember => console.log(`Nickname changed to ${GuildMember.nickname}`))
-                .catch(console.error);
+            if(guild.me.nickname != val) {
+                guild.me.setNickname(`${ticker} - $${val}`)        
+                    .then(GuildMember => console.log(`Nickname changed to ${GuildMember.nickname}`))
+                    .catch(console.error);
+            }
         });    
     }
 
     function setActivity(val) {
-        client.user.setActivity(val, {type: 'WATCHING'})
-            .then(presence => console.log(`Activity set to ${presence.activities[0].name}`))
-            .catch(console.error);
+        if(client.user.presence.activities.length && client.user.presence.activities[0].name != val) {
+            client.user.setActivity(val, {type: 'WATCHING'})
+                .then(presence => console.log(`Activity set to ${presence.activities[0].name}`))
+                .catch(console.error);
+        }
     }
 
     function run() {
@@ -71,32 +75,34 @@ client.on('ready', function() {
             }
             else if (data.marketState == 'PRE') {
                 if(data.preMarketChange < 0) {
-                    value = `-${parseFloat(data.preMarketChange).toFixed(1)}`;
-                    percent = `-${parseFloat(data.preMarketChangePercent).toFixed(1)}`;
+                    value = `${parseFloat(data.preMarketChange).toFixed(1)}`;
+                    percent = `${parseFloat(data.preMarketChangePercent).toFixed(1)}%`;
                 }
                 else {                
                     value = `+${parseFloat(data.preMarketChange).toFixed(1)}`;
                     percent = `+${parseFloat(data.preMarketChangePercent).toFixed(1)}%`;
                 }    
 
-                setActivity(`Pre-market: ${value} / ${percent}`);            
+                setActivity(`PM: ${value} / ${percent}`);            
             }
             else if (data.marketState == 'POST') {
                 if(data.postMarketChange < 0) {
-                    value = `-${parseFloat(data.postMarketChange).toFixed(1)}`;
-                    percent = `-${parseFloat(data.postMarketChangePercent).toFixed(1)}`;
+                    value = `${parseFloat(data.postMarketChange).toFixed(1)}`;
+                    percent = `${parseFloat(data.postMarketChangePercent).toFixed(1)}%`;
                 }
                 else {                
                     value = `+${parseFloat(data.postMarketChange).toFixed(1)}`;
                     percent = `+${parseFloat(data.postMarketChangePercent).toFixed(1)}%`;
                 }    
 
-                setActivity(`After-hours: ${value} / ${percent}`);            
+                setActivity(`AH: ${value} / ${percent}`);            
             }
             else {
                 console.error('Error: market');
                 process.exit();
             }
+
+            console.log(`Running again after ${frequency}`);
         });        
     }
 
