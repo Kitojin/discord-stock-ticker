@@ -1,11 +1,34 @@
 const Discord = require('discord.js');
-require('dotenv').config();
-
 const client = new Discord.Client();
 
-client.login(process.env.BOT_TOKEN);
+require('dotenv').config();
 
-client.on('ready', () => console.log('The Bot is ready!'));
+const token = process.env.BOT_TOKEN;
+const ticker = process.env.TICKER;
+
+if(!token || !ticker)
+    console.log('Vars missing');
+
+client.login(token);
+client.on('ready', () => console.log(`Logged in as ${client.user.tag}`));
+console.log(client.guilds);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Adding jokes function
 
