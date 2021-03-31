@@ -35,9 +35,9 @@ client.on('ready', function() {
     // convert number to K or M
     function numFormatter(num) {
         if(num > 999 && num < 1000000)
-            return (num/1000).toFixed(0) + 'K';
+            return (num/1000).toFixed(2) + 'K';
         else if(num > 1000000)
-            return (num/1000000).toFixed(0) + 'M';
+            return (num/1000000).toFixed(2) + 'M';
         else
             return num;
     }
@@ -108,9 +108,9 @@ client.on('ready', function() {
 
             // need this conditional because of a mobile bug showing !!; covering only existing possibilities
             if(typeof prefix !== 'undefined' && typeof volume === 'undefined')
-                setActivity(`${prefix} ${change} ${percent}`);  
+                setActivity(`${prefix}  ${change}  ${percent}`);  
             else
-                setActivity(`${change} ${percent} ${volume}`); 
+                setActivity(`${change}  ${percent}  ${volume}`); 
         });        
     }
 
