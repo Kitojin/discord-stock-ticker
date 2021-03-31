@@ -91,39 +91,39 @@ client.on('ready', function() {
             }
             // pre-market
             else if(data.marketState == 'PRE') {
-                if(data.preMarketChange < 0) {
-                    value = `${parseFloat(data.preMarketChange).toFixed(2)}`;
-                    percent = `${parseFloat(data.preMarketChangePercent).toFixed(2)}%`;
-                }
-                else {                
+                if(data.preMarketChange > 0) {
                     value = `+${parseFloat(data.preMarketChange).toFixed(2)}`;
                     percent = `+${parseFloat(data.preMarketChangePercent).toFixed(2)}%`;
+                }
+                else {   
+                    value = `${parseFloat(data.preMarketChange).toFixed(2)}`;
+                    percent = `${parseFloat(data.preMarketChangePercent).toFixed(2)}%`;             
                 }    
 
                 setActivity(`PM: ${value} ${percent}`);            
             }
             // after-hours
             else if(data.marketState == 'POST') {
-                if(data.postMarketChange < 0) {
-                    value = `${parseFloat(data.postMarketChange).toFixed(2)}`;
-                    percent = `${parseFloat(data.postMarketChangePercent).toFixed(2)}%`;
-                }
-                else {                
+                if(data.postMarketChange > 0) {
                     value = `+${parseFloat(data.postMarketChange).toFixed(2)}`;
                     percent = `+${parseFloat(data.postMarketChangePercent).toFixed(2)}%`;
+                }
+                else {   
+                    value = `${parseFloat(data.postMarketChange).toFixed(2)}`;
+                    percent = `${parseFloat(data.postMarketChangePercent).toFixed(2)}%`;             
                 } 
 
                 setActivity(`AH: ${value} ${percent}`); 
             }
             // close
             else {
-                if(data.postMarketChange < 0) {
-                    value = `${parseFloat(data.postMarketChange).toFixed(2)}`;
-                    percent = `${parseFloat(data.postMarketChangePercent).toFixed(2)}%`;
-                }
-                else {                
+                if(data.postMarketChange > 0) {
                     value = `+${parseFloat(data.postMarketChange).toFixed(2)}`;
                     percent = `+${parseFloat(data.postMarketChangePercent).toFixed(2)}%`;
+                }
+                else {      
+                    value = `${parseFloat(data.postMarketChange).toFixed(2)}`;
+                    percent = `${parseFloat(data.postMarketChangePercent).toFixed(2)}%`;          
                 } 
                 
                 setActivity(`$${data.postMarketPrice} ${value} ${percent}`);     
