@@ -30,7 +30,7 @@ client.login(token);
 client.on('ready', function() {
     console.log(`Logged in as ${client.user.tag}`);
     console.log(`Currently in ${client.guilds.cache.map(guild => `"${guild.name}"`).join(', ')}`);    
-    console.log(`Will run every ${frequency/1000} seconds`);
+    console.log(`Will run every ${frequency/1000} second(s)`);
 
     // convert number to K or M
     function numFormatter(num) {
@@ -76,8 +76,6 @@ client.on('ready', function() {
         source.getSingleStockInfo(ticker).then(data => {
             setNickname(`${ticker} - $${data.regularMarketPrice}`);
 
-            var prefix = '', change = '', percent = '', volume = '';
-
             switch(data.marketState) {
                 case 'REGULAR':
                     change = data.regularMarketChange;
@@ -108,7 +106,11 @@ client.on('ready', function() {
                 percent = `+${percent}`;
             }
 
-            setActivity(`${prefix} ${change} ${percent} ${volume}`);     
+            // need this conditional because of a mobile bug showing !!; covering only existing possibilities
+            if(typeof prefix !== 'undefined' && typeof volume === 'undefined')
+                setActivity(`${prefix} ${change} ${percent}`);  
+            else
+                setActivity(`${change} ${percent} ${volume}`); 
         });        
     }
 
