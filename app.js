@@ -61,9 +61,8 @@ client.on('ready', function() {
         }
     }
 
-    // clear bot's activity
+    // clear bot's activity (NOTE currently not being used)
     function clearActivity() {
-        //console.log(client.user.presence);
         if(client.user.presence.activities.length > 0) {
             client.user.setActivity()
                 .then(presence => console.log('Activity cleared'))
@@ -72,11 +71,12 @@ client.on('ready', function() {
     }
 
     function run() {
-        // fetch stock data
+        // fetch stock data (TODO optimize)
         source.getSingleStockInfo(ticker).then(data => {
             setNickname(`${ticker} - $${data.regularMarketPrice}`);
 
-            if(data.marketState == 'REGULAR') { // market open
+            // market
+            if(data.marketState == 'REGULAR') {
                 if(data.regularMarketChange < 0) {
                     value = `-${parseFloat(data.regularMarketChange).toFixed(2)}`;
                     percent = `-${parseFloat(data.regularMarketChangePercent).toFixed(2)}`;
@@ -87,9 +87,10 @@ client.on('ready', function() {
                 }               
                 volume = numFormatter(data.regularMarketVolume); 
 
-                setActivity(`${value} / ${percent} / ${volume}`);
+                setActivity(`${value} ${percent} ${volume}`);
             }
-            else if (data.marketState == 'PRE') { // pre-market
+            // pre-market
+            else if(data.marketState == 'PRE') {
                 if(data.preMarketChange < 0) {
                     value = `${parseFloat(data.preMarketChange).toFixed(2)}`;
                     percent = `${parseFloat(data.preMarketChangePercent).toFixed(2)}%`;
@@ -99,9 +100,10 @@ client.on('ready', function() {
                     percent = `+${parseFloat(data.preMarketChangePercent).toFixed(2)}%`;
                 }    
 
-                setActivity(`PM: ${value} / ${percent}`);            
+                setActivity(`PM: ${value} ${percent}`);            
             }
-            else if (data.marketState == 'POST') { // after-hours
+            // after-hours
+            else if(data.marketState == 'POST') {
                 if(data.postMarketChange < 0) {
                     value = `${parseFloat(data.postMarketChange).toFixed(2)}`;
                     percent = `${parseFloat(data.postMarketChangePercent).toFixed(2)}%`;
@@ -109,12 +111,23 @@ client.on('ready', function() {
                 else {                
                     value = `+${parseFloat(data.postMarketChange).toFixed(2)}`;
                     percent = `+${parseFloat(data.postMarketChangePercent).toFixed(2)}%`;
-                }    
+                } 
 
-                setActivity(`AH: ${value} / ${percent}`);            
+                setActivity(`AH: ${value} ${percent}`); 
             }
-            else
-                clearActivity();     
+            // close
+            else {
+                if(data.postMarketChange < 0) {
+                    value = `${parseFloat(data.postMarketChange).toFixed(2)}`;
+                    percent = `${parseFloat(data.postMarketChangePercent).toFixed(2)}%`;
+                }
+                else {                
+                    value = `+${parseFloat(data.postMarketChange).toFixed(2)}`;
+                    percent = `+${parseFloat(data.postMarketChangePercent).toFixed(2)}%`;
+                } 
+                
+                setActivity(`$${data.postMarketPrice} ${value} ${percent}`);     
+            }   
 
             console.log(`Running again after ${frequency/1000} seconds`);
         });        
