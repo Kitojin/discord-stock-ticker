@@ -15,15 +15,13 @@ require('dotenv').config();
 // fetch env
 const token = process.env.BOT_TOKEN;
 const ticker = process.env.TICKER;
-const frequency = process.env.FREQUENCY;
+const frequency = (process.env.FREQUENCY) ? process.env.FREQUENCY*1000 : 60*1000; // 1 minute default
 
 //check if vars exist
 if(!token || !ticker) {
     console.error('Error: params');
     process.exit();
 }
-if(!frequency)
-    frequency = 60000; // 1 minute 
 
 // login to discord
 client.login(token);
@@ -63,6 +61,16 @@ client.on('ready', function() {
         }
     }
 
+    // clear bot's activity
+    function clearActivity() {
+        //console.log(client.user.presence);
+        if(client.user.presence.activities.length > 0) {
+            client.user.setActivity()
+                .then(presence => console.log('Activity cleared'))
+                .catch(console.error);
+        }
+    }
+
     function run() {
         // fetch stock data
         source.getSingleStockInfo(ticker).then(data => {
@@ -71,11 +79,11 @@ client.on('ready', function() {
             if(data.marketState == 'REGULAR') { // market open
                 if(data.regularMarketChange < 0) {
                     value = `-${parseFloat(data.regularMarketChange).toFixed(2)}`;
-                    percent = `-${parseFloat(data.regularMarketChangePercent).toFixed(1)}`;
+                    percent = `-${parseFloat(data.regularMarketChangePercent).toFixed(2)}`;
                 }
                 else {                
                     value = `+${parseFloat(data.regularMarketChange).toFixed(2)}`;
-                    percent = `+${parseFloat(data.regularMarketChangePercent).toFixed(1)}%`;
+                    percent = `+${parseFloat(data.regularMarketChangePercent).toFixed(2)}%`;
                 }               
                 volume = numFormatter(data.regularMarketVolume); 
 
@@ -84,11 +92,11 @@ client.on('ready', function() {
             else if (data.marketState == 'PRE') { // pre-market
                 if(data.preMarketChange < 0) {
                     value = `${parseFloat(data.preMarketChange).toFixed(2)}`;
-                    percent = `${parseFloat(data.preMarketChangePercent).toFixed(1)}%`;
+                    percent = `${parseFloat(data.preMarketChangePercent).toFixed(2)}%`;
                 }
                 else {                
                     value = `+${parseFloat(data.preMarketChange).toFixed(2)}`;
-                    percent = `+${parseFloat(data.preMarketChangePercent).toFixed(1)}%`;
+                    percent = `+${parseFloat(data.preMarketChangePercent).toFixed(2)}%`;
                 }    
 
                 setActivity(`PM: ${value} / ${percent}`);            
@@ -96,21 +104,19 @@ client.on('ready', function() {
             else if (data.marketState == 'POST') { // after-hours
                 if(data.postMarketChange < 0) {
                     value = `${parseFloat(data.postMarketChange).toFixed(2)}`;
-                    percent = `${parseFloat(data.postMarketChangePercent).toFixed(1)}%`;
+                    percent = `${parseFloat(data.postMarketChangePercent).toFixed(2)}%`;
                 }
                 else {                
                     value = `+${parseFloat(data.postMarketChange).toFixed(2)}`;
-                    percent = `+${parseFloat(data.postMarketChangePercent).toFixed(1)}%`;
+                    percent = `+${parseFloat(data.postMarketChangePercent).toFixed(2)}%`;
                 }    
 
                 setActivity(`AH: ${value} / ${percent}`);            
             }
-            else {
-                console.error('Error: data');
-                process.exit();
-            }
+            else
+                clearActivity();     
 
-            console.log(`Running again after ${frequency}`);
+            console.log(`Running again after ${frequency/1000} seconds`);
         });        
     }
 
