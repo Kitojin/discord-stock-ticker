@@ -63,9 +63,9 @@ client.on('ready', function() {
 
     // set bot's role
     function setRole(val) {   
-        client.guilds.cache.forEach((guild) => {               
-            if(val) {
-                if(guild.me.hasPermission('MANAGE_ROLES')) {
+        client.guilds.cache.forEach((guild) => {              
+            if(guild.me.hasPermission('MANAGE_ROLES')) {             
+                if(val) {
                     role = guild.roles.cache.find(r => r.name == val);
 
                     if(!guild.me.roles.cache.has(role.id)) {              
@@ -77,10 +77,10 @@ client.on('ready', function() {
                             guild.me.roles.remove(guild.roles.cache.find(r => r.name == 'ticker-pos')).catch(console.error);
                     }
                 }
-            }
-            else {
-                guild.me.roles.remove(guild.roles.cache.find(r => r.name == 'ticker-pos')).catch(console.error);
-                guild.me.roles.remove(guild.roles.cache.find(r => r.name == 'ticker-neg')).catch(console.error);
+                else {
+                    guild.me.roles.remove(guild.roles.cache.find(r => r.name == 'ticker-pos')).catch(console.error);
+                    guild.me.roles.remove(guild.roles.cache.find(r => r.name == 'ticker-neg')).catch(console.error);
+                }            
             }
         });
     }
