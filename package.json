@@ -12,6 +12,6 @@
   "dependencies": {
     "discord.js": "^12.5.1",
     "dotenv": "^8.2.0",
-    "yahoo-finance-webscraper": "^1.3.0"
+    "yahoo-finance-webscraper": "^1.3.3"
   }
 }
