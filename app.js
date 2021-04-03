@@ -64,24 +64,31 @@ client.on('ready', function() {
     // set bot's role
     function setRole(val) {   
         client.guilds.cache.forEach((guild) => {              
-            if(guild.me.hasPermission('MANAGE_ROLES')) {             
-                if(val) {
-                    role = guild.roles.cache.find(r => r.name == val);
+            if(!guild.me.hasPermission('MANAGE_ROLES'))  
+                return false;
+            
+            positive = guild.roles.cache.find(r => r.name == 'ticker-pos');
+            negative = guild.roles.cache.find(r => r.name == 'ticker-neg');
 
-                    if(!guild.me.roles.cache.has(role.id)) {              
-                        guild.me.roles.add(role).catch(console.error);
+            if(!positive || !negative)
+                return false;
 
-                        if(role.name == 'ticker-pos')
-                            guild.me.roles.remove(guild.roles.cache.find(r => r.name == 'ticker-neg')).catch(console.error);
-                        else
-                            guild.me.roles.remove(guild.roles.cache.find(r => r.name == 'ticker-pos')).catch(console.error);
-                    }
+            if(val) {
+                role = guild.roles.cache.find(r => r.name == val);
+
+                if(!guild.me.roles.cache.has(role.id)) {              
+                    guild.me.roles.add(role).catch(console.error);
+
+                    if(role == positive)
+                        guild.me.roles.remove(negative).catch(console.error);
+                    else
+                        guild.me.roles.remove(positive).catch(console.error);
                 }
-                else {
-                    guild.me.roles.remove(guild.roles.cache.find(r => r.name == 'ticker-pos')).catch(console.error);
-                    guild.me.roles.remove(guild.roles.cache.find(r => r.name == 'ticker-neg')).catch(console.error);
-                }            
             }
+            else if(guild.me.roles.cache.has(positive.id) || guild.me.roles.cache.has(negative.id)) {
+                guild.me.roles.remove(positive).catch(console.error);
+                guild.me.roles.remove(negative).catch(console.error);
+            }    
         });
     }
 
