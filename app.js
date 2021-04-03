@@ -27,7 +27,7 @@ client.on('ready', function() {
     console.log(`Logged in as ${client.user.tag}`);
     if(client.guilds.cache.map(g => g).length > 0)
         console.log(`Currently in ${client.guilds.cache.map(g => `"${g.name}"`).join(', ')}`);   
-    console.log(`Will run every ${frequency/1000} second(s)`);
+    console.log(`Will fetch stock data every ${frequency/1000} second(s)`);
 
     // convert number to K or M
     function numFormatter(num) {
@@ -92,8 +92,8 @@ client.on('ready', function() {
         });
     }
 
-    function run() {
-        // fetch stock data
+    // fetch stock data
+    function fetch() {
         Yahoo.getSingleStockInfo(ticker).then(data => {
             setNickname(`${ticker} - $${data.regularMarketPrice}`);
 
@@ -164,7 +164,7 @@ client.on('ready', function() {
         });  
     }
 
-    setInterval(run, frequency);
+    setInterval(fetch, frequency);
 });
 
 // when bot joins a new server
@@ -182,7 +182,7 @@ client.on("guildCreate", guild => {
         .catch(console.error);
     }
     else 
-        console.log('Role "ticker-pos" already exists in this server');
+        console.log(`Role "ticker-pos" already exists in "${guild.name}"`);
 
     // create role for red
     if(typeof guild.roles.cache.find(r => r.name == 'ticker-neg') == 'undefined') {
@@ -195,7 +195,7 @@ client.on("guildCreate", guild => {
         .catch(console.error);
     }
     else 
-        console.log('Role "ticker-neg" already exists in this server');
+        console.log(`Role "ticker-neg" already exists in "${guild.name}"`);
  });
 
  // when bot leaves a server
