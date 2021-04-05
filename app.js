@@ -197,22 +197,26 @@ client.on('ready', function() {
                 message.channel.send(`Currently in ${client.guilds.cache.map(g => `"${g.name} <${g.id}>"`).join(', ')}`);                             
             else if(command == 'leave') {
                 if(args.length) {
-                    client.guilds.cache.get(args[0]).leave()
-                        .then(function(g) {
-                            message.channel.send(`Left "${g.name} <${g.id}>"`);
-                        })
-                        .catch(function(err) {
-                            message.channel.send('An error has occurred. Please view log.');
-                            log(err);
-                        });
+                    if(client.guilds.cache.get(args[0]) != undefined) {
+                        client.guilds.cache.get(args[0]).leave()
+                            .then(function(g) {
+                                message.channel.send(`Left "${g.name} <${g.id}>"`);
+                            })
+                            .catch(function(err) {
+                                message.channel.send('An error has occurred. Please view log');
+                                log(err);
+                            });
+                    }
+                    else
+                        message.channel.send(`Please provide a valid server ID. Your string: **${args[0]}**`);
                 }
                 else {
                     message.guild.leave().catch(function(err) {
-                        message.channel.send('An error has occurred. Please view log.');
+                        message.channel.send('An error has occurred. Please view log');
                         log(err);
                     });
                 }
-            }             
+            }         
         }    
     });
 
@@ -221,7 +225,7 @@ client.on('ready', function() {
         log(`Joined "${guild.name} <${guild.id}>"`);
 
         // create role for green
-        if(typeof guild.roles.cache.find(r => r.name == 'ticker-pos') == 'undefined') {
+        if(typeof guild.roles.cache.find(r => r.name == 'ticker-pos') == undefined) {
             guild.roles.create({
                 data: {
                 name: 'ticker-pos',
@@ -234,7 +238,7 @@ client.on('ready', function() {
             log(`Role "ticker-pos" already exists in "${guild.name} <${guild.id}>"`);
 
         // create role for red
-        if(typeof guild.roles.cache.find(r => r.name == 'ticker-neg') == 'undefined') {
+        if(typeof guild.roles.cache.find(r => r.name == 'ticker-neg') == undefined) {
             guild.roles.create({
                 data: {
                 name: 'ticker-neg',
