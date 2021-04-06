@@ -29,16 +29,23 @@ client.login(token);
 // logged
 client.on('ready', function() {
     // get main channel from owner's server
-    if(home && channel)
-        logChannel = client.guilds.cache.get(home).channels.cache.get(channel);    
-
+    if(home && channel) {
+        if (client.guilds.cache.get(home))
+            if(client.guilds.cache.get(home).channels.cache.get(channel))
+                logChannel = client.guilds.cache.get(home).channels.cache.get(channel);    
+            else
+                console.log(`Error: can't find home's channel`);
+        else
+            console.log(`Error: can't find home`);
+    }
+        
     // log to host and owner's server
     function log(val) {  
         console.log(val); 
         
-        if(logChannel) {
+        if(typeof logChannel !== 'undefined') {
             date = new Date(); 
-            timestamp = `${date.getFullYear()}-${(`0` + parseInt(date.getMonth()+1)).slice(-2)}-${(`0` + date.getDate()).slice(-2)}T${date.getHours()}:${date.getMinutes()}`;
+            timestamp = `${date.getFullYear()}-${(`0` + parseInt(date.getMonth()+1)).slice(-2)}-${(`0` + date.getDate()).slice(-2)}T${(`0` + date.getHours()).slice(-2)}:${(`0` + date.getMinutes()).slice(-2)}`;
             logChannel.send('```' + `${timestamp} ${val}` + '```');
         }
     }
@@ -46,7 +53,7 @@ client.on('ready', function() {
     // success
     log(`Logged in as ${client.user.tag}`);
     if(client.guilds.cache.map(g => g).length > 0)
-        log(`Currently in ${client.guilds.cache.map(g => `"${g.name} <${g.id}>"`).join(', ')}`);   
+        log(`Currently in: ${client.guilds.cache.map(g => `"${g.name} <${g.id}>"`).join(', ')}`);   
     log(`Will fetch stock data every ${frequency/1000} second(s)`);    
 
     // convert number to K or M
@@ -67,7 +74,7 @@ client.on('ready', function() {
                     guild.me.setNickname(val).catch(function(err) { log(err); });
             }
             else
-                log(`Missing permission to change nickname in "${guild.name}"`);
+                log(`Missing permissions to change nickname in "${guild.name}"`);
         });    
     }
 
@@ -81,6 +88,24 @@ client.on('ready', function() {
             client.user.setActivity().catch(function(err) { log(err); });
     }
 
+    // create role
+    function createRole(guild, name, color) {          
+        if(!guild.me.hasPermission('MANAGE_ROLES'))  
+            return;
+
+        if(typeof guild.roles.cache.find(r => r.name == name) === 'undefined') {
+            guild.roles.create({
+                data: {
+                name: name,
+                color: color,
+                }
+            })
+            .catch(function(err) { log(err); });
+        }
+        else 
+            log(`Role "${name}" already exists in "${guild.name} <${guild.id}>"`);        
+    }
+
     // set bot's role
     function setRole(val) {   
         client.guilds.cache.forEach((guild) => {              
@@ -88,10 +113,12 @@ client.on('ready', function() {
                 return;
             
             positive = guild.roles.cache.find(r => r.name == 'ticker-pos');
-            negative = guild.roles.cache.find(r => r.name == 'ticker-neg');
+            if(!positive)
+                createRole(guild, 'ticker-pos', 'GREEN');
 
-            if(!positive || !negative)
-                return;
+            negative = guild.roles.cache.find(r => r.name == 'ticker-neg');
+            if(!negative)
+                createRole(guild, 'ticker-neg', 'RED');
 
             if(val) {
                 role = guild.roles.cache.find(r => r.name == val);
@@ -123,6 +150,7 @@ client.on('ready', function() {
             change = null;
             percent = null;
             volume = null;
+            final = null;
 
             switch(data.marketState) {
                 case 'REGULAR':
@@ -147,38 +175,43 @@ client.on('ready', function() {
                     percent = data.postMarketChangePercent;
                     break;
                 default:
-                    activity = false;
+                    activity = true;
                     role = false;
+                    leading = 'Closed:';
+                    final = `$${data.postMarketPrice}`;
             }
 
             if(activity == true) {
-                change = parseFloat(change).toFixed(2);
-                percent = `${parseFloat(percent).toFixed(2)}%`;
+                if(change) {
+                    change = parseFloat(change).toFixed(2);
+                    percent = `${parseFloat(percent).toFixed(2)}%`;
 
-                if(change >= 0) {
-                    if(role == true)
-                        setRole('ticker-pos');
+                    if(change >= 0) {
+                        if(role == true)
+                            setRole('ticker-pos');
+                        else
+                            setRole();
+
+                        if(change > 0) {
+                            change = `+${change}`;
+                            percent = `+${percent}`;
+                        }
+                    }
+                    else if(role == true)
+                        setRole('ticker-neg');
                     else
                         setRole();
 
-                    if(change > 0) {
-                        change = `+${change}`;
-                        percent = `+${percent}`;
-                    }
-                }
-                else if(role == true)
-                    setRole('ticker-neg');
+                    if(leading && !volume)
+                        setActivity(`${leading} ${change} ${percent}`); 
+                    else
+                        setActivity(`${change} ${percent} ${volume}`); 
+                } 
                 else
-                    setRole();            
-
-                // need this conditional because of a mobile bug showing !!; covering only existing possibilities
-                if(leading != null && volume == null)
-                    setActivity(`${leading} ${change} ${percent}`); 
-                else
-                    setActivity(`${change} ${percent} ${volume}`); 
+                    setActivity(`${leading} ${final}`); 
             }
             else {
-                setActivity();
+                setActivity();            
                 setRole();
             }
         });  
@@ -187,17 +220,18 @@ client.on('ready', function() {
     
     // interact with messages
     client.on('message', message => {
-        if(!prefix || !message.content.startsWith(prefix)) return;
+        if(!prefix || !message.content.startsWith(prefix))
+            return;
 
         args = message.content.slice(prefix.length).trim().split(' ');
         command = args.shift().toLowerCase();
 
         if(owner && message.author.id == owner) {           
             if(command == 'servers')  
-                message.channel.send(`Currently in ${client.guilds.cache.map(g => `"${g.name} <${g.id}>"`).join(', ')}`);                             
+                message.channel.send(`Currently in: \n\`${client.guilds.cache.map(g => `${g.name} <${g.id}>`).join('\n')}\``);                             
             else if(command == 'leave') {
                 if(args.length) {
-                    if(client.guilds.cache.get(args[0]) != undefined) {
+                    if(typeof client.guilds.cache.get(args[0]) !== 'undefined') {
                         client.guilds.cache.get(args[0]).leave()
                             .then(function(g) {
                                 message.channel.send(`Left "${g.name} <${g.id}>"`);
@@ -223,32 +257,8 @@ client.on('ready', function() {
     // when bot joins a new server
     client.on('guildCreate', guild => {
         log(`Joined "${guild.name} <${guild.id}>"`);
-
-        // create role for green
-        if(typeof guild.roles.cache.find(r => r.name == 'ticker-pos') == undefined) {
-            guild.roles.create({
-                data: {
-                name: 'ticker-pos',
-                color: 'GREEN',
-                }
-            })
-            .catch(function(err) { log(err); });
-        }
-        else 
-            log(`Role "ticker-pos" already exists in "${guild.name} <${guild.id}>"`);
-
-        // create role for red
-        if(typeof guild.roles.cache.find(r => r.name == 'ticker-neg') == undefined) {
-            guild.roles.create({
-                data: {
-                name: 'ticker-neg',
-                color: 'RED',
-                }
-            })
-            .catch(function(err) { log(err); });
-        }
-        else 
-            log(`Role "ticker-neg" already exists in "${guild.name} <${guild.id}>"`);
+        createRole(guild, 'ticker-pos', 'GREEN');
+        createRole(guild, 'ticker-neg', 'RED');
     });
 
     // when bot leaves a server
